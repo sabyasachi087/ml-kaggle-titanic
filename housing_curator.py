@@ -10,12 +10,19 @@ from CategoricalEncoder import CategoricalEncoder
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_squared_error
 from sklearn.metrics import mean_absolute_error
-
+from stat_hyp_test import HypothesisTesting
+from sklearn.linear_model.logistic import LogisticRegression
+from sklearn.tree.tree import DecisionTreeRegressor
+from sklearn.ensemble.forest import RandomForestRegressor
+from sklearn.svm import SVR 
+from sklearn.model_selection import cross_val_score
+from sklearn.metrics import make_scorer
+import time
 
 HOUSING_PATH = 'datasets/housing/'
 from sklearn.model_selection import train_test_split
 
-def mean_absolute_percentage_error(y_true, y_pred): 
+def mean_absolute_percentage_error(y_true, y_pred, **kwargs): 
     """
     Use of this metric is not recommended because can cause division by zero
     See other regression metrics on sklearn docs:
@@ -49,19 +56,24 @@ for train_index, test_index in split.split(housing, housing["income_cat"]):
     strat_train_set = housing.loc[train_index]
     strat_test_set = housing.loc[test_index]
 
-housing = strat_train_set.drop("median_house_value", axis=1) # drop labels for training set
+housing = strat_train_set.drop("median_house_value", axis=1)  # drop labels for training set
 housing_labels = strat_train_set["median_house_value"].copy()
 
-housing_num = housing.drop("ocean_proximity", axis=1)
+housing_test = strat_test_set.drop("median_house_value", axis=1)  # drop labels for training set
+housing_test_labels = strat_test_set["median_house_value"].copy()
 
+housing_num = housing.drop("ocean_proximity", axis=1)
+housing_test_num = housing.drop("ocean_proximity", axis=1)
 
 num_pipeline = Pipeline([
         ('imputer', Imputer(strategy="median")),
-        ('attribs_adder', CombinedAttributesAdder()),  #derive new features 
+        ('attribs_adder', CombinedAttributesAdder()),  # derive new features 
         ('std_scaler', StandardScaler()),
     ])
 
 housing_num_tr = num_pipeline.fit_transform(housing_num)
+housing_num_test = num_pipeline.fit_transform(housing_test_num)
+
 
 num_attribs = list(housing_num)
 cat_attribs = ["ocean_proximity"]
@@ -86,19 +98,37 @@ full_pipeline = FeatureUnion(transformer_list=[
     ])
 
 housing_prepared = full_pipeline.fit_transform(housing)
+housing_test_prepared = full_pipeline.fit_transform(housing_test)
 
+model_maps = dict()
+model_maps["Linear_Regression"] = LinearRegression()
+model_maps["Logistic_Regression"] = LogisticRegression()
+model_maps["DecisionTreeRegressor"] = DecisionTreeRegressor()
+model_maps["RandomForestRegressor"] = RandomForestRegressor()
+model_maps["SupportVectorRegressor"] = SVR()
 
+results = pd.DataFrame(columns=["Hardware", "ExpID", "RMSETrainCF", "RMSETest", "MAPETrainCF", "MAPETest", "p-value", "TrainTime(s)", "TestTime(s)", "Experiment description"])
 
-lin_reg = LinearRegression()
-lin_reg.fit(housing_prepared, housing_labels)
+mape_scorer = make_scorer(mean_absolute_percentage_error, greater_is_better=False)
 
-
-
-housing_predictions = lin_reg.predict(housing_prepared)
-lin_mse = mean_squared_error(housing_labels, housing_predictions)
-lin_rmse = np.sqrt(lin_mse)
-print(lin_rmse)
-
-
-lin_mae = mean_absolute_error(housing_labels, housing_predictions)
-print(lin_mae)
+for name, algo in model_maps.items():
+    indx = len(results)
+    results.loc[indx] = ["Corei3/8GB", indx + 1, 0, 0, 0, 0, 0, 0, 0, "Verifying " + str(name)]
+    start_time = time.time()
+    algo.fit(housing_prepared, housing_labels)
+    results.loc[indx]["TrainTime"] = time.time() - start_time
+    scores = cross_val_score(algo, housing_prepared, housing_labels,
+                         scoring=mape_scorer, cv=5)
+    results.loc[indx]["MAPETrainCF"] = scores.mean()
+    scores = cross_val_score(algo, housing_prepared, housing_labels,
+                         scoring=mean_squared_error, cv=5)
+    results.loc[indx]["RMSETrainCF"] = np.sqrt(scores).mean()
+    # Test / Prediction
+    start_time = time.time()
+    housing_predictions = algo.predict(housing_test_prepared)
+    results.loc[indx]["TestTime"] = time.time() - start_time
+    algo_rmse = np.sqrt(mean_squared_error(housing_test_labels, housing_predictions))
+    results.loc[indx]["RMSETest"] = algo_rmse.mean()
+    algo_mape = np.array(mape_scorer(housing_test_labels, housing_predictions))
+    results.loc[indx]["MAPETest"] = algo_mape.mean()
+    
