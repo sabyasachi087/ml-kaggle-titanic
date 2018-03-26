@@ -22,6 +22,7 @@ import time
 HOUSING_PATH = 'datasets/housing/'
 from sklearn.model_selection import train_test_split
 
+
 def mean_absolute_percentage_error(y_true, y_pred, **kwargs): 
     """
     Use of this metric is not recommended because can cause division by zero
@@ -34,6 +35,7 @@ def mean_absolute_percentage_error(y_true, y_pred, **kwargs):
     """
     return np.mean(np.abs((y_true.ravel() - y_pred.ravel()) / y_true.ravel())) * 100
 
+
 def load_housing_data(housing_path=HOUSING_PATH):
     csv_path = os.path.join(housing_path, "housing.csv")
     return pd.read_csv(csv_path)
@@ -45,8 +47,6 @@ train_set, test_set = train_test_split(housing, test_size=0.2, random_state=42)
 housing["income_cat"] = np.ceil(housing["median_income"] / 1.5)
 # Label those above 5 as 5
 housing["income_cat"].where(housing["income_cat"] < 5, 5.0, inplace=True)
-
-
 
 from sklearn.model_selection import StratifiedShuffleSplit
 
@@ -73,7 +73,6 @@ num_pipeline = Pipeline([
 
 housing_num_tr = num_pipeline.fit_transform(housing_num)
 housing_num_test = num_pipeline.fit_transform(housing_test_num)
-
 
 num_attribs = list(housing_num)
 cat_attribs = ["ocean_proximity"]
@@ -121,14 +120,15 @@ for name, algo in model_maps.items():
                          scoring=mape_scorer, cv=5)
     results.loc[indx]["MAPETrainCF"] = scores.mean()
     scores = cross_val_score(algo, housing_prepared, housing_labels,
-                         scoring=mean_squared_error, cv=5)
-    results.loc[indx]["RMSETrainCF"] = np.sqrt(scores).mean()
+                         scoring="neg_mean_squared_error", cv=5)
+    results.loc[indx]["RMSETrainCF"] = np.sqrt(-scores).mean()
     # Test / Prediction
     start_time = time.time()
     housing_predictions = algo.predict(housing_test_prepared)
     results.loc[indx]["TestTime"] = time.time() - start_time
     algo_rmse = np.sqrt(mean_squared_error(housing_test_labels, housing_predictions))
     results.loc[indx]["RMSETest"] = algo_rmse.mean()
-    algo_mape = np.array(mape_scorer(housing_test_labels, housing_predictions))
+    algo_mape = np.array(mean_absolute_percentage_error(housing_test_labels, housing_predictions))
     results.loc[indx]["MAPETest"] = algo_mape.mean()
     
+print(results)

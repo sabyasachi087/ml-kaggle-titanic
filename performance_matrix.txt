@@ -1,0 +1,13 @@
+     Hardware ExpID RMSETrainCF RMSETest MAPETrainCF MAPETest p-value  \
+0  Corei3/8GB     1     68874.7  66793.6    -28.6198   29.235       0   
+1  Corei3/8GB     2      161769   166216    -65.0146  68.4419       0   
+2  Corei3/8GB     3     71556.4   109988    -24.6266  44.1763       0   
+3  Corei3/8GB     4       52636  85095.5     -19.471  36.4344       0   
+4  Corei3/8GB     5      118513   116788    -52.1135  53.0508       0   
+
+  TrainTime(s) TestTime(s)            Experiment description  
+0            0           0       Verifying Linear_Regression  
+1            0           0     Verifying Logistic_Regression  
+2            0           0   Verifying DecisionTreeRegressor  
+3            0           0   Verifying RandomForestRegressor  
+4            0           0  Verifying SupportVectorRegressor  
