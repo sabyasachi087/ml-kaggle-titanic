@@ -23,7 +23,7 @@ titanic_data.drop("Survived", axis=1, inplace=True)
 titanic_passenger_ids = titanic_data["PassengerId"]
 titanic_data.drop("PassengerId", axis=1, inplace=True)
 
-cat_attribs = ["Embarked", "Sex"]
+cat_attribs = ["Embarked", "Sex", "title"]
 titanic_data_num = titanic_data.copy()
 for cat_attrb in cat_attribs:
     titanic_data_num = titanic_data_num.drop(cat_attrb, axis=1)
