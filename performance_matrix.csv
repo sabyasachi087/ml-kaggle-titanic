@@ -1,0 +1,21 @@
+,Hardware,ExpID,RMSETrainCF,RMSETest,MAPETrainCF,MAPETest,p-value,TrainTime(s),TestTime(s),Experiment description
+0,Corei3/8GB,1.0,0.0,0.0,0.0,0.0,0.0,0.015600204467773438,0.0,Training Linear_Regression
+1,Corei3/8GB,2.0,68874.67758888852,0.0,-28.61984234132803,0.0,0.0,3.463200092315674,0.0,MAPE and RMSE Cross Validation for Linear_Regression
+2,Corei3/8GB,3.0,0.0,66793.59827487289,0.0,29.235035843946644,1.75871350920855e-05,0.0,0.031199932098388672,"Testing Linear_Regression
+ Machine learning pipeline A is better than B"
+3,Corei3/8GB,4.0,0.0,0.0,0.0,0.0,0.0,542.4867000579834,0.0,Training Logistic_Regression
+4,Corei3/8GB,5.0,161769.12413932022,0.0,-65.01461828646647,0.0,0.0,1083.9173996448517,0.0,MAPE and RMSE Cross Validation for Logistic_Regression
+5,Corei3/8GB,6.0,0.0,166215.68080540904,0.0,68.44185220394179,1.950801597367156e-06,0.0,0.1716001033782959,"Testing Logistic_Regression
+ Machine learning pipeline A is better than B"
+6,Corei3/8GB,7.0,0.0,0.0,0.0,0.0,0.0,0.249603271484375,0.0,Training DecisionTreeRegressor
+7,Corei3/8GB,8.0,71799.72260291479,0.0,-24.83901793345545,0.0,0.0,3.83764910697937,0.0,MAPE and RMSE Cross Validation for DecisionTreeRegressor
+8,Corei3/8GB,9.0,0.0,110805.96464333593,0.0,43.92869663095482,7.797290191561097e-06,0.0,0.0,"Testing DecisionTreeRegressor
+ Machine learning pipeline A is better than B"
+9,Corei3/8GB,10.0,0.0,0.0,0.0,0.0,0.0,0.7800099849700928,0.0,Training RandomForestRegressor
+10,Corei3/8GB,11.0,52898.558500572224,0.0,-19.039891994620376,0.0,0.0,5.896875858306885,0.0,MAPE and RMSE Cross Validation for RandomForestRegressor
+11,Corei3/8GB,12.0,0.0,82206.5272126035,0.0,36.33619847708779,0.36793787340861506,0.0,0.10920143127441406,"Testing RandomForestRegressor
+ There is no significant difference between the two machine learning pipelines (Accept H0)"
+12,Corei3/8GB,13.0,0.0,0.0,0.0,0.0,0.0,9.562922477722168,0.0,Training SupportVectorRegressor
+13,Corei3/8GB,14.0,108957.43225423449,0.0,-46.347213878365146,0.0,0.0,24.727317094802856,0.0,MAPE and RMSE Cross Validation for SupportVectorRegressor
+14,Corei3/8GB,15.0,0.0,105091.61306505163,0.0,45.956161264607594,1.314650938780582e-07,0.0,0.967212438583374,"Testing SupportVectorRegressor
+ Machine learning pipeline A is better than B"

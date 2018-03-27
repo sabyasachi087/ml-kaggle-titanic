@@ -101,34 +101,68 @@ housing_test_prepared = full_pipeline.fit_transform(housing_test)
 
 model_maps = dict()
 model_maps["Linear_Regression"] = LinearRegression()
-model_maps["Logistic_Regression"] = LogisticRegression()
-model_maps["DecisionTreeRegressor"] = DecisionTreeRegressor()
-model_maps["RandomForestRegressor"] = RandomForestRegressor()
-model_maps["SupportVectorRegressor"] = SVR()
+model_maps["Logistic_Regression"] = LogisticRegression(random_state=42, n_jobs=-1)
+model_maps["DecisionTreeRegressor"] = DecisionTreeRegressor(random_state=42)
+model_maps["RandomForestRegressor"] = RandomForestRegressor(random_state=42, n_jobs=-1)
+model_maps["SupportVectorRegressor"] = SVR(kernel="linear")
 
 results = pd.DataFrame(columns=["Hardware", "ExpID", "RMSETrainCF", "RMSETest", "MAPETrainCF", "MAPETest", "p-value", "TrainTime(s)", "TestTime(s)", "Experiment description"])
 
 mape_scorer = make_scorer(mean_absolute_percentage_error, greater_is_better=False)
 
-for name, algo in model_maps.items():
-    indx = len(results)
-    results.loc[indx] = ["Corei3/8GB", indx + 1, 0, 0, 0, 0, 0, 0, 0, "Verifying " + str(name)]
+
+def trainStep(algo, indx, name):
+    print("starting " + str(name) + " training")
+    results.loc[indx] = ["Corei3/8GB", indx + 1, 0, 0, 0, 0, 0, 0, 0, "Training " + str(name)]
     start_time = time.time()
     algo.fit(housing_prepared, housing_labels)
-    results.loc[indx]["TrainTime"] = time.time() - start_time
-    scores = cross_val_score(algo, housing_prepared, housing_labels,
-                         scoring=mape_scorer, cv=5)
-    results.loc[indx]["MAPETrainCF"] = scores.mean()
-    scores = cross_val_score(algo, housing_prepared, housing_labels,
-                         scoring="neg_mean_squared_error", cv=5)
-    results.loc[indx]["RMSETrainCF"] = np.sqrt(-scores).mean()
-    # Test / Prediction
+    results.loc[indx, "TrainTime(s)"] = time.time() - start_time
+    print("ends " + str(name) + " training")
+
+def validationStep(algo, indx, name):
+    print("starting " + str(name) + " validation")
+    results.loc[indx] = ["Corei3/8GB", indx + 1, 0, 0, 0, 0, 0, 0, 0, "MAPE and RMSE Cross Validation for " + str(name)]
     start_time = time.time()
-    housing_predictions = algo.predict(housing_test_prepared)
-    results.loc[indx]["TestTime"] = time.time() - start_time
+    scores = cross_val_score(algo, housing_prepared, housing_labels,
+                         scoring=mape_scorer, cv=5, n_jobs=-1)
+    results.loc[indx, "MAPETrainCF"] = scores.mean()    
+    start_time = time.time()
+    scores = cross_val_score(algo, housing_prepared, housing_labels,
+                         scoring="neg_mean_squared_error", cv=5, n_jobs=-1)
+    results.loc[indx, "RMSETrainCF"] = np.sqrt(-scores).mean()
+    results.loc[indx, "TrainTime(s)"] = time.time() - start_time
+    print("ends " + str(name) + " validation")
+
+def testStep(algo, indx, name):
+    print("starting " + str(name) + " testing")
+    results.loc[indx] = ["Corei3/8GB", indx + 1, 0, 0, 0, 0, 0, 0, 0, "Testing " + str(name)]
+    start_time = time.time()
+    housing_predictions = algo.predict(housing_test_prepared)    
     algo_rmse = np.sqrt(mean_squared_error(housing_test_labels, housing_predictions))
-    results.loc[indx]["RMSETest"] = algo_rmse.mean()
+    results.loc[indx, "RMSETest"] = algo_rmse.mean()
     algo_mape = np.array(mean_absolute_percentage_error(housing_test_labels, housing_predictions))
-    results.loc[indx]["MAPETest"] = algo_mape.mean()
-    
-print(results)
+    results.loc[indx, "MAPETest"] = algo_mape.mean()
+    results.loc[indx, "TestTime(s)"] = time.time() - start_time
+    print("ends " + str(name) + " testing")
+
+def pValue(hypTest, algo, indx):
+    print("starting " + str(algo) + " p_value")
+    p_value, result = hypTest.evaluate(algo)
+    results.loc[indx, "p-value"] = p_value
+    results.loc[indx, "Experiment description"] = results.loc[indx, "Experiment description"] + "\n " + result
+    print("ends " + str(algo) + " p_value")
+
+if __name__ == "__main__":
+    baseModel = RandomForestRegressor()
+    hypTest = HypothesisTesting(baseModel, housing_prepared, housing_labels)
+    for name, algo in model_maps.items():
+        indx = len(results)
+        trainStep(algo, indx, name)
+        indx = len(results)
+        validationStep(algo, indx, name)
+        indx = len(results)
+        testStep(algo, indx, name)
+        pValue(hypTest, algo, indx)
+        
+    print(results)
+    results.to_csv("performance_matrix.csv")
